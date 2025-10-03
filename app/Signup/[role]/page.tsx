@@ -46,7 +46,7 @@ export default function SignupPage({ params }: PageProps) {
       </section>
 
       {/* Signup Form */}
-      <section className="flex flex-col items-center justify-center mt-10 mx-auto w-[90%] max-w-xl bg-opacity-10 rounded-3xl p-6">
+      <section className="flex flex-col items-center justify-center mt-5 mx-auto w-[90%] max-w-xl bg-opacity-10 rounded-3xl p-6">
         <h2 className="text-3xl mb-6">{roleName} Signup</h2>
         <form className="w-full border-2 border-white rounded-2xl p-6" onSubmit={handleSubmit}>
           <div className="mb-6">
