@@ -1,98 +1,159 @@
 "use client";
+import { useState } from "react";
+import { useParams } from "next/navigation"; // <-- Use Next.js, not react-router-dom!
 import Link from "next/link";
-import React, { useState } from "react";
-import { use } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import { z } from "zod";
 
-interface PageProps {
-  params: Promise<{ role: string }>;
-}
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  password: z.string().min(1, "Password is required"),
+});
 
-export default function LoginPage({ params }: PageProps) {
-  const { role } = use(params);
-
+const Login = () => {
+  const params = useParams();
+  const role = params?.role || "student";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const roleName = role.charAt(0).toUpperCase() + role.slice(1);
+  const roleName = typeof role === "string" ? role.charAt(0).toUpperCase() + role.slice(1) : "Student";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Logging in as ${roleName} with email: ${email}`);
-  };
+    setErrors({});
 
+    
+  };
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#1e3a8a] to-[#071c49] text-white">
-      {/* Header */}
-      <header className="flex justify-around items-center gap-3 bg-[#1A0C4E] p-4">
-        <img
-          width="200"
-          height="50"
-          src="https://licet.ac.in/wp-content/uploads/2021/02/licet-e1617087721530.png"
-          alt="LICET Logo"
-        />
-        <div className="text-center">
-          <h1 className="text-4xl mb-2">
-            LOYOLA-ICAM COLLEGE OF ENGINEERING AND TECHNOLOGY
-          </h1>
-          <p className="text-xl">(Autonomous)</p>
+
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
+      {/* Professional Header */}
+      <header className="bg-card shadow-sm border-b border-border">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex flex-col md:flex-row items-center justify-around gap-4">
+            <img
+              width="240"
+              height="105"
+              src="https://licet.ac.in/wp-content/uploads/2021/02/licet-e1617087721530.png"
+              alt="LICET Logo"
+              className=""
+            />
+            <div className="text-center">
+              <h1 className="text-3xl md:text-2xl font-bold text-foreground">
+                LOYOLA-ICAM COLLEGE OF ENGINEERING AND TECHNOLOGY
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground">(Autonomous)</p>
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* Department Banner */}
-      <section className="border border-white bg-gradient-to-t from-sky-600 to-[#1A0C4E] p-3 text-2xl text-center">
-        DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING
+      {/* Department Banner - Colorful Gradient */}
+      <section className="bg-gradient-to-r from-blue-700 to-blue-900 py-4 shadow-md">
+        <div className="container mx-auto px-4">
+          <p className="text-center text-base md:text-lg font-semibold text-white">
+            DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING
+          </p>
+        </div>
       </section>
 
       {/* Login Form */}
-      <section className="flex flex-col items-center justify-center mt-10 mx-auto w-[90%] max-w-xl  bg-opacity-10 rounded-3xl p-6">
-        <h2 className="text-3xl mb-6">{roleName} Login</h2>
-        <form className="w-full border-2 border-white rounded-2xl p-6" onSubmit={handleSubmit}>
-          <div className="mb-6">
-            <label className="block mb-2">Email:</label>
-            <input
-              className="w-full p-3 bg-blue-900 rounded-2xl focus:outline-none text-white placeholder-white"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={`${role} email`}
-              required
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block mb-2">Password:</label>
-            <input
-              className="w-full p-3 bg-blue-900 rounded-2xl focus:outline-none text-white placeholder-white"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={`${role} password`}
-              required
-            />
-          </div>
+      <main className="container mx-auto px-4 py-8 md:py-12">
+        <div className="max-w-md mx-auto">
+          <Card className="shadow-lg border-border">
+            <CardHeader className="space-y-1 text-center pb-6">
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-orange-500 bg-clip-text text-transparent">
+                Welcome Back
+              </CardTitle>
+              <CardDescription className="text-base">
+                Sign in to your {role} account
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium">
+                    Email Address
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={`${role}@licet.ac.in`}
+                    className={`h-11 transition-all ${errors.email ? "border-destructive" : ""}`}
+                    required
+                  />
+                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                </div>
 
-          <div className="flex justify-center items-center mb-6">
-            <p className="mr-2">Don't have Account?</p>
-            <Link href={`/Signup/${roleName}`} className="underline text-sky-300">
-              Sign up
-            </Link>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className={`h-11 transition-all ${errors.password ? "border-destructive" : ""}`}
+                    required
+                  />
+                  {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                </div>
 
-          <div className="flex justify-between">
-            <Link
-              href="/"
-              className="w-[150px] text-center border-2 border-white rounded-xl p-3 hover:bg-blue-800"
-            >
-              Back
-            </Link>
-            <button
-              className="w-[150px] border-2 border-white rounded-xl p-3 hover:bg-blue-800"
-              type="submit"
-            >
-              Login as {roleName}
-            </button>
-          </div>
-        </form>
-      </section>
-    </main>
-  );
-}
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Don't have an account?</span>
+                    <Link
+                      href={`/Signup/${role}`}
+                      className="text-sm font-medium text-blue-700 hover:text-orange-500 transition-colors"
+                    >
+                      Sign up
+                    </Link>
+                  </div>
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm font-medium text-blue-700 hover:text-orange-500 transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 h-11 border-blue-700 text-blue-700 hover:bg-blue-700 hover:text-white transition-all"
+                    asChild
+                  >
+                    <Link href="/">Back to Home</Link>
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 h-11 bg-gradient-to-r from-blue-700 to-blue-900 hover:opacity-90 transition-opacity text-white"
+                  >
+                    Sign In
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            Protected by industry-standard security protocols
+          </p>
+        </div>
+      </main>
+    </div>
+      );
+};
+
+export default Login;
+
