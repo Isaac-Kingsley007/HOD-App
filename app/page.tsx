@@ -59,7 +59,7 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12 md:py-20">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
             Welcome to the CSE Portal
           </h2>
