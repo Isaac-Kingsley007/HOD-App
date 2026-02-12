@@ -1,8 +1,59 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+- [Node.js](https://nodejs.org/) (version 20 or higher)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/) or [pnpm](https://pnpm.io/) or [bun](https://bun.sh/)
+- [PostgreSQL](https://www.postgresql.org/) database
+
+## Clone Repository
+
+To clone this repository to your local machine:
+
+```bash
+git clone https://github.com/Isaac-Kingsley007/HOD-App.git
+cd HOD-App
+```
+
+## Installation
+
+1. Install the dependencies:
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+# or
+bun install
+```
+
+2. Set up your environment variables:
+
+Copy the `.env.example` file to `.env` and update it with your database connection string:
+
+```bash
+cp .env.example .env
+```
+
+Then edit the `.env` file with your actual database credentials:
+
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/hod_app"
+```
+
+3. Generate Prisma client and run migrations:
+
+```bash
+npx prisma generate
+npx prisma migrate dev
+```
+
 ## Getting Started
 
-First, run the development server:
+Run the development server:
 
 ```bash
 npm run dev
