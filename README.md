@@ -7,7 +7,7 @@ Before you begin, ensure you have the following installed:
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/) or [pnpm](https://pnpm.io/) or [bun](https://bun.sh/)
 - [PostgreSQL](https://www.postgresql.org/) database
 
-## Clone Repository
+## Clone the Repository
 
 To clone this repository to your local machine:
 
@@ -43,6 +43,8 @@ Then edit the `.env` file with your actual database credentials:
 ```env
 DATABASE_URL="postgresql://username:password@localhost:5432/hod_app"
 ```
+
+**Note:** Replace `username` and `password` with your actual PostgreSQL credentials. Never commit your `.env` file to version control as it contains sensitive information.
 
 3. Generate Prisma client and run migrations:
 
