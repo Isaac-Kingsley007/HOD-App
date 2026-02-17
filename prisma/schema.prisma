@@ -1,14 +1,170 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema for HOD App - CSE Department Admin
+// Database: Neon (PostgreSQL)
+// Run: npx prisma generate && npx prisma db push (or migrate)
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+}
+
+// ============ Department Structure ============
+
+model Year {
+  id        String    @id @default(cuid())
+  name      String    // "I Year", "II Year", etc.
+  order     Int       @unique // 1, 2, 3, 4
+  sections  Section[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Section {
+  id              String   @id @default(cuid())
+  sectionCode     String   @unique // "y1a", "y1b", "y2a", etc.
+  name            String   // "CSE A", "CSE B"
+  currentSemester String   // "I Sem", "III Sem", "V Sem", "VII Sem"
+  yearId          String
+  year            Year     @relation(fields: [yearId], references: [id], onDelete: Cascade)
+  classAdvisorId  String?
+  classAdvisor    Faculty? @relation("ClassAdvisor", fields: [classAdvisorId], references: [id])
+  students        Student[]
+  subjectAssignments SectionSubject[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([yearId])
+}
+
+// ============ People ============
+
+model Student {
+  id             String   @id @default(cuid())
+  slug           String   @unique // "y1a-s1", "y1a-s2" - used in URL
+  name           String
+  rollNo         String
+  regNo          String?
+  email          String
+  phone          String?
+  address        String?
+  imageUrl       String?
+  sectionId      String
+  section        Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  marks          StudentMark[]
+  certifications StudentCertification[]
+  projects       StudentProject[]
+  attendance     StudentAttendance[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([sectionId])
+  @@index([rollNo])
+}
+
+model Faculty {
+  id           String   @id @default(cuid())
+  name         String
+  designation  String   // "Associate Professor", "Assistant Professor"
+  email        String
+  phone        String?
+  classAdvisorSections Section[] @relation("ClassAdvisor")
+  subjectAssignments   SectionSubject[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ============ Subjects & Teaching ============
+
+model Subject {
+  id          String   @id @default(cuid())
+  code        String   @unique // "CS301", "CS302"
+  name        String
+  credits     Int
+  assignments SectionSubject[]
+}
+
+model SectionSubject {
+  id        String   @id @default(cuid())
+  sectionId String
+  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  facultyId String
+  faculty   Faculty  @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+  @@unique([sectionId, subjectId])
+  @@index([sectionId])
+}
+
+// ============ Student Academic Data ============
+
+model StudentMark {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  semester   String   // "I", "II", "III", etc.
+  gpa        Float?
+  percentage Float?
+
+  @@unique([studentId, semester])
+  @@index([studentId])
+}
+
+model StudentCertification {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title     String
+  issuer    String
+  date      DateTime @db.Date
+
+  @@index([studentId])
+}
+
+model StudentProject {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  year        String
+
+  @@index([studentId])
+}
+
+model StudentAttendance {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  semester   String
+  percent    Float
+
+  @@unique([studentId, semester])
+  @@index([studentId])
+}
+
+// ============ Documents & Events (Admin) ============
+
+model Document {
+  id         String   @id @default(cuid())
+  name       String
+  category   String   // "Syllabus", "Calendar", "Course"
+  year       String   // "I Year", "All", etc.
+  lastUpdated DateTime @db.Date
+
+  @@index([year])
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  date        DateTime @db.Date
+  status      String   // "Planned", "Completed", "Ongoing"
+  coordinator String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
 }

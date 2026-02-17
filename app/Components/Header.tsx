@@ -4,7 +4,7 @@ interface HeaderProps {
   showDepartmentBanner?: boolean;
 }
 
-export default function Header({ showDepartmentBanner = true }: HeaderProps): JSX.Element {
+export default function Header({ showDepartmentBanner = true }: HeaderProps) {
   return (
     <>
       {/* College Header */}

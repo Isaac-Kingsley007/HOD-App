@@ -1,55 +1,14 @@
 import React from 'react'
 import { notFound } from 'next/navigation'
+import { getStudentProfile } from '@/lib/queries'
 
-type StudentProfile = {
-  id: string
-  name: string
-  rollNo: string
-  regNo: string
-  email: string
-  phone: string
-  address: string
-  image: string
-  attendancePercent: number
-  marks: { semester: string; gpa?: number; percentage?: number }[]
-  certifications: { title: string; issuer: string; date: string }[]
-  projects: { title: string; description: string; year: string }[]
-}
-
-// Dummy fetcher - replace with real DB query
-async function fetchStudentProfile(studentId: string): Promise<StudentProfile | null> {
-  if (!studentId) return null
-  // simulated data
-  return {
-    id: studentId,
-    name: 'Student Example',
-    rollNo: `${studentId}-RL`,
-    regNo: `REG-${studentId}`,
-    email: 'student@example.edu',
-    phone: '9876543210',
-    address: '123 College Road, City, State',
-    image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${studentId}`,
-    attendancePercent: 92,
-    marks: [
-      { semester: 'I', percentage: 78 },
-      { semester: 'II', percentage: 82 },
-      { semester: 'III', percentage: 74 },
-      { semester: 'IV', percentage: 80 },
-    ],
-    certifications: [
-      { title: 'AWS Cloud Practitioner', issuer: 'Amazon', date: '2025-06-12' },
-      { title: 'React Professional', issuer: 'Udemy', date: '2024-11-05' },
-    ],
-    projects: [
-      { title: 'Smart Attendance System', description: 'Face-recognition based attendance tracking', year: '2025' },
-      { title: 'E-Learning Platform', description: 'MERN stack learning management', year: '2024' },
-    ],
-  }
-}
-
-export default async function StudentProfilePage({ params }: { params: { studentId: string } }) {
-  const { studentId } = params
-  const profile = await fetchStudentProfile(studentId)
+export default async function StudentProfilePage({
+  params,
+}: {
+  params: Promise<{ studentId: string }>
+}) {
+  const { studentId } = await params
+  const profile = await getStudentProfile(studentId)
   if (!profile) return notFound()
 
   return (
