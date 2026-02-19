@@ -5,11 +5,9 @@
 generator client {
   provider = "prisma-client-js"
 }
-
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
-
 // ============ Department Structure ============
 
 model Year {
@@ -50,9 +48,15 @@ model Student {
   phone          String?
   address        String?
   imageUrl       String?
+  dob            DateTime? @db.Date
+  bloodGroup     String?
+  parentName     String?
+  parentPhone    String?
+  achievements   String?   // Free-form achievements text
   sectionId      String
   section        Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   marks          StudentMark[]
+  subjectMarks   SubjectMark[]
   certifications StudentCertification[]
   projects       StudentProject[]
   attendance     StudentAttendance[]
@@ -64,15 +68,19 @@ model Student {
 }
 
 model Faculty {
-  id           String   @id @default(cuid())
-  name         String
-  designation  String   // "Associate Professor", "Assistant Professor"
-  email        String
-  phone        String?
+  id             String   @id @default(cuid())
+  name           String
+  designation    String   // "Associate Professor", "Assistant Professor"
+  email          String
+  phone          String?
+  qualification  String?  // "Ph.D", "M.Tech"
+  expertise      String?  // "Machine Learning, Data Science"
+  imageUrl       String?
   classAdvisorSections Section[] @relation("ClassAdvisor")
   subjectAssignments   SectionSubject[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  uploadedMarks        SubjectMark[] @relation("UploadedMarks")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 // ============ Subjects & Teaching ============
@@ -110,6 +118,39 @@ model StudentMark {
 
   @@unique([studentId, semester])
   @@index([studentId])
+}
+
+model SubjectMark {
+  id           String   @id @default(cuid())
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectCode  String
+  subjectName  String
+  semester     String
+  internal1    Float?
+  internal2    Float?
+  internal3    Float?
+  assignment   Float?
+  exam         Float?
+  total        Float?
+  grade        String?
+  uploadedById String?
+  uploadedBy   Faculty? @relation("UploadedMarks", fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([studentId, subjectCode, semester])
+  @@index([studentId])
+  @@index([uploadedById])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  target    String   // "all", "students", "faculty"
+  postedBy  String
+  createdAt DateTime @default(now())
 }
 
 model StudentCertification {

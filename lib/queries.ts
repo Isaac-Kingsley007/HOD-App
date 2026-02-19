@@ -154,6 +154,11 @@ export async function getStudentProfile(studentSlug: string) {
     phone: student.phone ?? '',
     address: student.address ?? '',
     image: student.imageUrl ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.slug}`,
+    dob: student.dob?.toISOString().slice(0, 10) ?? '',
+    bloodGroup: student.bloodGroup ?? '',
+    parentName: student.parentName ?? '',
+    parentPhone: student.parentPhone ?? '',
+    achievements: student.achievements ?? '',
     attendancePercent: latestAttendance?.percent ?? 0,
     marks: student.marks.map((m) => ({
       semester: m.semester,
@@ -161,14 +166,225 @@ export async function getStudentProfile(studentSlug: string) {
       percentage: m.percentage ?? undefined,
     })),
     certifications: student.certifications.map((c) => ({
+      id: c.id,
       title: c.title,
       issuer: c.issuer,
       date: c.date.toISOString().slice(0, 10),
     })),
     projects: student.projects.map((p) => ({
+      id: p.id,
       title: p.title,
       description: p.description ?? '',
       year: p.year,
     })),
+    attendance: student.attendance.map((a) => ({
+      semester: a.semester,
+      percent: a.percent,
+    })),
   }
+}
+
+// ============ Student Dashboard (full) ============
+
+export async function getStudentDashboardData(studentSlug: string) {
+  const student = await prisma.student.findUnique({
+    where: { slug: studentSlug },
+    include: {
+      section: {
+        include: {
+          year: true,
+          subjectAssignments: {
+            include: { subject: true, faculty: true },
+          },
+        },
+      },
+      marks: { orderBy: { semester: 'asc' } },
+      subjectMarks: { orderBy: { semester: 'asc' } },
+      certifications: { orderBy: { date: 'desc' } },
+      projects: { orderBy: { year: 'desc' } },
+      attendance: { orderBy: { semester: 'asc' } },
+    },
+  })
+
+  if (!student) return null
+
+  const announcements = await prisma.announcement.findMany({
+    where: { target: { in: ['all', 'students'] } },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  })
+
+  return {
+    id: student.slug,
+    name: student.name,
+    rollNo: student.rollNo,
+    regNo: student.regNo ?? '',
+    email: student.email,
+    phone: student.phone ?? '',
+    address: student.address ?? '',
+    image: student.imageUrl ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.slug}`,
+    dob: student.dob?.toISOString().slice(0, 10) ?? '',
+    bloodGroup: student.bloodGroup ?? '',
+    parentName: student.parentName ?? '',
+    parentPhone: student.parentPhone ?? '',
+    achievements: student.achievements ?? '',
+    sectionName: student.section.name,
+    yearName: student.section.year.name,
+    currentSemester: student.section.currentSemester,
+    marks: student.marks.map((m) => ({
+      semester: m.semester,
+      gpa: m.gpa ?? undefined,
+      percentage: m.percentage ?? undefined,
+    })),
+    subjectMarks: student.subjectMarks.map((sm) => ({
+      id: sm.id,
+      subjectCode: sm.subjectCode,
+      subjectName: sm.subjectName,
+      semester: sm.semester,
+      internal1: sm.internal1,
+      internal2: sm.internal2,
+      internal3: sm.internal3,
+      assignment: sm.assignment,
+      exam: sm.exam,
+      total: sm.total,
+      grade: sm.grade,
+    })),
+    certifications: student.certifications.map((c) => ({
+      id: c.id,
+      title: c.title,
+      issuer: c.issuer,
+      date: c.date.toISOString().slice(0, 10),
+    })),
+    projects: student.projects.map((p) => ({
+      id: p.id,
+      title: p.title,
+      description: p.description ?? '',
+      year: p.year,
+    })),
+    attendance: student.attendance.map((a) => ({
+      semester: a.semester,
+      percent: a.percent,
+    })),
+    subjects: student.section.subjectAssignments.map((a) => ({
+      code: a.subject.code,
+      name: a.subject.name,
+      credits: a.subject.credits,
+      facultyName: a.faculty.name,
+    })),
+    announcements: announcements.map((a) => ({
+      id: a.id,
+      title: a.title,
+      content: a.content,
+      postedBy: a.postedBy,
+      createdAt: a.createdAt.toISOString(),
+    })),
+  }
+}
+
+// ============ Faculty Dashboard ============
+
+export async function getFacultyDashboardData(facultyId: string) {
+  const faculty = await prisma.faculty.findUnique({
+    where: { id: facultyId },
+    include: {
+      classAdvisorSections: {
+        include: {
+          year: true,
+          _count: { select: { students: true } },
+        },
+      },
+      subjectAssignments: {
+        include: {
+          subject: true,
+          section: {
+            include: {
+              year: true,
+              students: {
+                orderBy: { rollNo: 'asc' },
+                select: { id: true, slug: true, name: true, rollNo: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!faculty) return null
+
+  const announcements = await prisma.announcement.findMany({
+    where: { target: { in: ['all', 'faculty'] } },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  })
+
+  return {
+    id: faculty.id,
+    name: faculty.name,
+    designation: faculty.designation,
+    email: faculty.email,
+    phone: faculty.phone ?? '',
+    qualification: faculty.qualification ?? '',
+    expertise: faculty.expertise ?? '',
+    image: faculty.imageUrl ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${faculty.id}`,
+    advisorSections: faculty.classAdvisorSections.map((s) => ({
+      id: s.sectionCode,
+      name: s.name,
+      yearName: s.year.name,
+      currentSemester: s.currentSemester,
+      studentCount: s._count.students,
+    })),
+    assignments: faculty.subjectAssignments.map((a) => ({
+      id: a.id,
+      subjectCode: a.subject.code,
+      subjectName: a.subject.name,
+      credits: a.subject.credits,
+      sectionId: a.section.sectionCode,
+      sectionName: `${a.section.name} - ${a.section.year.name}`,
+      currentSemester: a.section.currentSemester,
+      students: a.section.students.map((st) => ({
+        id: st.id,
+        slug: st.slug,
+        name: st.name,
+        rollNo: st.rollNo,
+      })),
+    })),
+    announcements: announcements.map((a) => ({
+      id: a.id,
+      title: a.title,
+      content: a.content,
+      postedBy: a.postedBy,
+      createdAt: a.createdAt.toISOString(),
+    })),
+  }
+}
+
+// ============ All Students (for selection) ============
+
+export async function getAllStudents() {
+  const students = await prisma.student.findMany({
+    orderBy: { rollNo: 'asc' },
+    include: { section: { include: { year: true } } },
+  })
+  return students.map((s) => ({
+    slug: s.slug,
+    name: s.name,
+    rollNo: s.rollNo,
+    sectionName: s.section.name,
+    yearName: s.section.year.name,
+  }))
+}
+
+// ============ All Faculty (for selection) ============
+
+export async function getAllFaculty() {
+  const faculty = await prisma.faculty.findMany({
+    orderBy: { name: 'asc' },
+  })
+  return faculty.map((f) => ({
+    id: f.id,
+    name: f.name,
+    designation: f.designation,
+    email: f.email,
+  }))
 }
