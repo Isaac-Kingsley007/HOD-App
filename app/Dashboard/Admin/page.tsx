@@ -1,9 +1,8 @@
 import React from 'react'
+import { getAdminDashboardData } from '@/lib/queries'
+import AdminContent from './AdminContent'
 
-const page = () => {
-  return (
-    <div>page</div>
-  )
+export default async function CseAdminPage() {
+  const data = await getAdminDashboardData()
+  return <AdminContent years={data.years} documents={data.documents} events={data.events} />
 }
-
-export default page
