@@ -1,19 +1,32 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requireAuth } from "@/lib/auth-helpers"
 
 // PUT /api/students/[studentId]/profile — update student profile
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ studentId: string }> }
 ) {
-  try {
-    const { studentId } = await params
-    const body = await request.json()
+  const { error, session } = await requireAuth(["student", "admin"])
+  if (error) return error
 
-    const student = await prisma.student.findUnique({ where: { slug: studentId } })
-    if (!student) {
-      return NextResponse.json({ error: 'Student not found' }, { status: 404 })
-    }
+  const { studentId } = await params
+
+  // Students can only update their own profile
+  const student = await prisma.student.findUnique({ where: { slug: studentId } })
+  if (!student) {
+    return NextResponse.json({ error: 'Student not found' }, { status: 404 })
+  }
+
+  if (session!.user.role === "student" && session!.user.studentId !== student.id) {
+    return NextResponse.json(
+      { error: "Forbidden - You can only update your own profile" },
+      { status: 403 }
+    )
+  }
+
+  try {
+    const body = await request.json()
 
     const updated = await prisma.student.update({
       where: { slug: studentId },

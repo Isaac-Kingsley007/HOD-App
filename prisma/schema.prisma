@@ -5,9 +5,34 @@
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
 }
+
+// ============ Authentication ============
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String    // bcrypt hashed password
+  role          String    // "admin", "faculty", "student"
+  name          String
+
+  // Optional links to existing Faculty/Student records
+  facultyId     String?   @unique
+  faculty       Faculty?  @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+
+  studentId     String?   @unique
+  student       Student?  @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+
 // ============ Department Structure ============
 
 model Year {
@@ -60,6 +85,7 @@ model Student {
   certifications StudentCertification[]
   projects       StudentProject[]
   attendance     StudentAttendance[]
+  user           User?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -79,6 +105,7 @@ model Faculty {
   classAdvisorSections Section[] @relation("ClassAdvisor")
   subjectAssignments   SectionSubject[]
   uploadedMarks        SubjectMark[] @relation("UploadedMarks")
+  user           User?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

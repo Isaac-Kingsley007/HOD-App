@@ -1,31 +1,52 @@
 import React from 'react'
-import { getAllStudents, getStudentDashboardData } from '@/lib/queries'
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
+import { getStudentDashboardData } from '@/lib/queries'
+import { prisma } from "@/lib/db"
 import StudentDashboardContent from './StudentDashboardContent'
-import StudentSelector from './StudentSelector'
 
-export default async function StudentPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ id?: string }>
-}) {
-  const { id } = await searchParams
+export default async function StudentPage() {
+  const session = await auth()
 
-  if (!id) {
-    const students = await getAllStudents()
-    return <StudentSelector students={students} />
+  if (!session || session.user.role !== "student") {
+    redirect("/Login/student")
   }
 
-  const data = await getStudentDashboardData(id)
+  const studentId = session.user.studentId
+
+  if (!studentId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600">Profile Not Linked</h1>
+          <p className="text-gray-600 mt-2">
+            Your account is not linked to a student profile. Please contact the admin.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Get student slug from studentId
+  const student = await prisma.student.findUnique({
+    where: { id: studentId },
+    select: { slug: true },
+  })
+
+  if (!student) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <h1 className="text-2xl font-bold">Student Profile Not Found</h1>
+      </div>
+    )
+  }
+
+  const data = await getStudentDashboardData(student.slug)
+
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Student Not Found</h1>
-          <p className="text-slate-500 mt-2">The student ID &ldquo;{id}&rdquo; was not found.</p>
-          <a href="/Dashboard/Student" className="mt-4 inline-block px-4 py-2 bg-indigo-600 text-white rounded-md">
-            Back to Selection
-          </a>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <h1 className="text-2xl font-bold">Student Data Not Found</h1>
       </div>
     )
   }

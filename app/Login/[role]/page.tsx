@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { z } from "zod";
+import { signIn } from "next-auth/react"
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters"),
@@ -23,11 +24,42 @@ const Login = () => {
 
   const roleName = typeof role === "string" ? role.charAt(0).toUpperCase() + role.slice(1) : "Student";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
-    
+    // Validate
+    const result = loginSchema.safeParse({ email, password });
+    if (!result.success) {
+      const fieldErrors: { [key: string]: string } = {};
+      result.error.errors.forEach((err) => {
+        if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    try {
+      const response = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (response?.error) {
+        toast.error("Invalid email or password");
+        return;
+      }
+
+      toast.success("Login successful!");
+
+      // Redirect to appropriate dashboard
+      const dashboardPath = `/Dashboard/${typeof role === "string" ? role.charAt(0).toUpperCase() + role.slice(1) : "Student"}`;
+      window.location.href = dashboardPath;
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Something went wrong. Please try again.");
+    }
   };
   return (
 

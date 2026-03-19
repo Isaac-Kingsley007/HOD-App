@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requireAuth } from "@/lib/auth-helpers"
 
 export async function GET() {
+  const { error } = await requireAuth() // Any authenticated user
+  if (error) return error
+
   try {
     const announcements = await prisma.announcement.findMany({
       orderBy: { createdAt: 'desc' },
@@ -15,16 +19,24 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const { error, session } = await requireAuth(["admin"])
+  if (error) return error
+
   try {
     const body = await request.json()
-    const { title, content, target, postedBy } = body
+    const { title, content, target } = body
 
-    if (!title || !content || !target || !postedBy) {
+    if (!title || !content || !target) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     const announcement = await prisma.announcement.create({
-      data: { title, content, target, postedBy },
+      data: {
+        title,
+        content,
+        target,
+        postedBy: session!.user.name,
+      },
     })
 
     return NextResponse.json(announcement)
